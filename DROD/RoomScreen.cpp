@@ -331,7 +331,7 @@ void CRoomScreen::InitKeysymToCommandMap(
 	if (Files.GetGameProfileString(INISection::Localization, INIKey::Keyboard, strKeyboard))
 	{
 		wKeyboard = atoi(strKeyboard.c_str());
-		if (wKeyboard > 1)
+		if (wKeyboard > 2)
 			wKeyboard = 0; //invalid setting
 	}
 

@@ -295,6 +295,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>false</Profile>
       <ProgramDatabaseFile>$(Configuration)-Temp/$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalOptions>/ignore:4099 /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CaravelRelease|Win32'">

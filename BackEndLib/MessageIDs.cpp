@@ -7354,7 +7354,7 @@ LANGUAGE Language::Get(const char* pStr)
 
 	for (UINT i=1; i<LanguageCount; ++i)
 	{
-		if (!stricmp(pStr, szLanguage[i]))
+		if (!_stricmp(pStr, szLanguage[i]))
 			return (LANGUAGE)i;
 	}
 

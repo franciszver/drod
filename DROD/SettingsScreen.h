@@ -35,7 +35,7 @@
 #include "../DRODLib/GameConstants.h"
 #include <BackEndLib/Types.h>
 
-extern const SDL_Keycode COMMANDKEY_ARRAY[2][InputCommands::DCMD_Count];	//desktop or notebook
+extern const SDL_Keycode COMMANDKEY_ARRAY[3][InputCommands::DCMD_Count];	//desktop, notebook, or alternative letter
 
 //*****************************************************************************************
 class CSettingsScreen : public CDrodScreen

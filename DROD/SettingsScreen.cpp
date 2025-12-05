@@ -64,13 +64,16 @@ using namespace InputCommands;
 #define MIN_TARSTUFF_ALPHA (64)
 
 //Default command key mappings.
-const SDL_Keycode COMMANDKEY_ARRAY[2][DCMD_Count] = {	//desktop or laptop keyboard
+const SDL_Keycode COMMANDKEY_ARRAY[3][DCMD_Count] = {	//desktop, laptop, or alternative letter keyboard
 {	//numpad default
 	SDLK_KP_7, SDLK_KP_8, SDLK_KP_9, SDLK_KP_4, SDLK_KP_5, SDLK_KP_6, SDLK_KP_1, SDLK_KP_2, SDLK_KP_3,
 	SDLK_w, SDLK_q, SDLK_r, SDLK_BACKSPACE, SDLK_KP_PLUS, SDLK_KP_PERIOD, SDLK_TAB
 },{	//laptop default
 	SDLK_7, SDLK_8, SDLK_9, SDLK_u, SDLK_i, SDLK_o, SDLK_j, SDLK_k, SDLK_l,
 	SDLK_w, SDLK_q, SDLK_r, SDLK_BACKSPACE, SDLK_0, SDLK_PERIOD, SDLK_TAB
+},{	//alternative letter layout (Vi-style)
+	SDLK_y, SDLK_k, SDLK_u, SDLK_h, SDLK_SPACE, SDLK_l, SDLK_b, SDLK_j, SDLK_n,
+	SDLK_w, SDLK_q, SDLK_r, SDLK_BACKSPACE, SDLK_KP_PLUS, SDLK_KP_PERIOD, SDLK_TAB
 }};
 
 //Widget tag constants.
@@ -93,6 +96,7 @@ const UINT TAG_CLONESWITCH_BUTTON = 1016;
 
 const UINT TAG_DEFAULT_DESKTOP = 1020;
 const UINT TAG_DEFAULT_LAPTOP = 1021;
+const UINT TAG_DEFAULT_LETTERS = 1022;
 
 const UINT TAG_USE_FULLSCREEN = 1040;
 const UINT TAG_ENABLE_SOUNDEFF = 1041;
@@ -775,6 +779,15 @@ CSettingsScreen::CSettingsScreen()
 			CX_CMD_BUTTON, CY_CMD_BUTTON, g_pTheDB->GetMessageText(MID_DefaultLaptop));
 	pTabbedMenu->AddWidgetToTab(pButton, COMMANDS_TAB);
 
+	//Get text for alternative letter layout button, with fallback if not in database
+	WSTRING wstrLettersText = g_pTheDB->GetMessageText(MID_DefaultLetters);
+	if (wstrLettersText.empty())
+		wstrLettersText = L"Alternative Letter Layout"; // Fallback text
+	pButton = new CButtonWidget(TAG_DEFAULT_LETTERS,
+			X_CMD_BUTTON + (CX_CMD_BUTTON + CX_SPACE) * 2, Y_BUTTON_OFFSET,
+			CX_CMD_BUTTON, CY_CMD_BUTTON, wstrLettersText.c_str());
+	pTabbedMenu->AddWidgetToTab(pButton, COMMANDS_TAB);
+
 	//Okay, cancel and help buttons.
 	pButton = new CButtonWidget(TAG_OK, X_OKAY_BUTTON, Y_OKAY_BUTTON,
 				CX_OKAY_BUTTON, CY_OKAY_BUTTON, g_pTheDB->GetMessageText(MID_Okay));
@@ -932,12 +945,19 @@ void CSettingsScreen::OnClick(const UINT dwTagNo)
 
 		case TAG_DEFAULT_DESKTOP:
 		case TAG_DEFAULT_LAPTOP:
+		case TAG_DEFAULT_LETTERS:
 			if (ShowYesNoMessage(MID_DefaultKeyCommandsPrompt) == TAG_YES)
 			{
 				//Revert key command settings to default.
 				CFiles f;
-				f.WriteGameProfileString(INISection::Localization, INIKey::Keyboard, dwTagNo == TAG_DEFAULT_LAPTOP ? "1" : "0");
-				const UINT wKeyboard = dwTagNo == TAG_DEFAULT_LAPTOP ? 1 : 0;
+				UINT wKeyboard = 0;
+				if (dwTagNo == TAG_DEFAULT_LAPTOP)
+					wKeyboard = 1;
+				else if (dwTagNo == TAG_DEFAULT_LETTERS)
+					wKeyboard = 2;
+				char cKeyboard[2];
+				_itoa(wKeyboard, cKeyboard, 10);
+				f.WriteGameProfileString(INISection::Localization, INIKey::Keyboard, cKeyboard);
 
 				for (UINT wIndex = 0; wIndex<DCMD_Count; ++wIndex)
 				{
@@ -1250,7 +1270,7 @@ void CSettingsScreen::SetUnspecifiedPlayerSettings(
 	if (CFiles::GetGameProfileString(INISection::Localization, INIKey::Keyboard, strKeyboard))
 	{
 		wKeyboard = atoi(strKeyboard.c_str());
-		if (wKeyboard > 1) wKeyboard = 0;	//invalid setting
+		if (wKeyboard > 2) wKeyboard = 0;	//invalid setting
 	}
 
 	for (UINT wIndex = 0; wIndex<DCMD_Count; ++wIndex)

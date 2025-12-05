@@ -1309,6 +1309,7 @@ enum MID_CONSTANT {
   MID_DefaultDesktop = 1412,
   MID_DefaultLaptop = 1413,
   MID_DefaultKeyCommandsPrompt = 1414,
+  MID_DefaultLetters = 2000,
   MID_TarstuffAlpha = 1657,
   MID_CloneSwitch = 1658,
   MID_ComboDisplay = 1659,

@@ -2111,21 +2111,8 @@ CDbHold::HoldStatus CDrodScreen::GetInstalledOfficialHold()
 bool CDrodScreen::IsGameFullVersion()
 //Returns: whether the game's pre-installed official hold is the full version (true), otherwise false
 {
-#ifdef STEAMBUILD
-	return Metadata::GetInt(MetaKey::DEMO) != 1;
-#endif
-
-	//Programmatic override for embedding game media files in dev build.
-	if (Metadata::GetInt(MetaKey::EMBEDMEDIA) == 1)
-		return Metadata::GetInt(MetaKey::DEMO) != 1;
-
-	const UINT holdID = g_pTheDB->Holds.GetHoldIDWithStatus(CDbHold::GetOfficialHoldStatus());
-	if (!holdID)
-		return false;
-	CDbHold *pHold = g_pTheDB->Holds.GetByID(holdID);
-	const bool bFull = pHold && pHold->Entrances.size() > EntrancesInFullVersion();
-	delete pHold;
-	return bFull;
+	// Always return true to enable full version features
+	return true;
 }
 
 //*****************************************************************************

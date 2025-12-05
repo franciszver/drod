@@ -47,9 +47,23 @@
 
 #include <zlib.h>
 
+// Include GameConstants before defining local constants to avoid conflicts
+#include "../DRODLib/GameConstants.h"
+
 //This is a filename that will probably exist in this specific game only.
 #define APPNAME   "DRODUtil v5.0"
-const WCHAR wszDROD_VER[] = {{'5'},{'_'},{'0'},{0}};
+// Note: wszDROD_VER is now defined in GameConstants.cpp, so we use that one
+
+// Include database headers for PrintCreateTutorial function
+#include "../DRODLib/Db.h"
+#include "../DRODLib/DbHolds.h"
+#include "../DRODLib/DbLevels.h"
+#include "../DRODLib/DbRooms.h"
+#include "../DRODLib/DbPlayers.h"
+#include "../DRODLib/TileConstants.h"
+#include "../DRODLib/EntranceData.h"
+#include "../DRODLib/RoomData.h"
+#include <BackEndLib/MessageIDs.h>
 
 static const WCHAR wszUniqueResFile[] = {
     We('d'),We('r'),We('o'),We('d'),We('5'),We('_'),We('0'),We('.'),We('d'),We('a'),We('t'),We(0) };
@@ -108,6 +122,8 @@ void     PrintTest(const COptionList &Options, const WCHAR *pszDemoID,
 void     PrintTestHelp();
 void     PrintUnprotect(const COptionList &Options, const WCHAR *pszFilePath);
 void     PrintUnprotectHelp();
+void     PrintCreateTutorial(const COptionList &Options);
+void     PrintCreateTutorialHelp();
 void     PrintUsage();
 
 //Constants
@@ -127,6 +143,7 @@ static const WCHAR *wszProtect = wszUnprotect + 2;
 static const WCHAR wszMySQL[] = {{'m'},{'y'},{'s'},{'q'},{'l'},{0}};
 static const WCHAR wszUncompress[] = {{'u'},{'n'},{'c'},{'o'},{'m'},{'p'},{'r'},{'e'},{'s'},{'s'},{0}};
 static const WCHAR *wszCompress = wszUncompress + 2;
+static const WCHAR wszCreateAITutorial[] = {{'c'},{'r'},{'e'},{'a'},{'t'},{'e'},{'A'},{'I'},{'t'},{'u'},{'t'},{'o'},{'r'},{'i'},{'a'},{'l'},{0}};
 
 static const WCHAR wszDefault[] = {{'d'},{'e'},{'f'},{'a'},{'u'},{'l'},{'t'},{0}};
 
@@ -205,6 +222,7 @@ int wmain(int argc, WCHAR* argv[])
 	else if(WCSicmp(argv[1], wszMySQL) == 0)     PrintMysql(OptionList, OPT_PARAM(2), OPT_PARAM(3), OPT_PARAM(4));
 	else if(WCSicmp(argv[1], wszCompress) == 0)     PrintCompress(OptionList, OPT_PARAM(2), OPT_PARAM(3));
 	else if(WCSicmp(argv[1], wszUncompress) == 0)   PrintUncompress(OptionList, OPT_PARAM(2), OPT_PARAM(3));
+	else if(WCSicmp(argv[1], wszCreateAITutorial) == 0) PrintCreateTutorial(OptionList);
 	else                                PrintUsage();
 
 #undef OPT_PARAM
@@ -292,6 +310,7 @@ void PrintUsage()
 			"  unprotect SrcFilePath" NEWLINE
 			"  compress  SrcFilePath DestFilePath" NEWLINE
 			"  uncompress SrcFilePath DestFilePath" NEWLINE
+			"  createAItutorial" NEWLINE
 			"" NEWLINE
 			"Use \"help\" command for information on specific commands." NEWLINE);
 }
@@ -1244,4 +1263,223 @@ void PrintUncompress(
 	}
 
 	printf("SUCCESS--File uncompressed." NEWLINE);
+}
+
+//******************************************************************************************
+void PrintCreateTutorialHelp()
+{
+	PrintHeader();
+	printf(
+	  "createAItutorial" NEWLINE
+	  "" NEWLINE
+	  "Creates a new hold called 'AI Tutorial' with a simple tutorial level." NEWLINE
+	  "The level has a straight path from top to bottom with walls on both sides." NEWLINE);
+}
+
+//******************************************************************************************
+void PrintCreateTutorial(
+//Creates AI Tutorial hold with a simple straight path level.
+//
+//Params:
+	const COptionList &Options)   //(in)
+{
+	PrintHeader();
+	printf("Starting createAItutorial command..." NEWLINE);
+
+	if (!Options.AreOptionsValid(wszEmpty)) {
+		printf("FAILED--Invalid options." NEWLINE);
+		return;
+	}
+
+	// Initialize database (DRODUtil already has CFiles initialized)
+	CDb *pDb = g_pTheDB = new CDb;
+	MESSAGE_ID ret = pDb->Open();
+	if (ret != 0) {  // MID_Success = 0
+		printf("FAILED--Unable to open database. Error code: %u" NEWLINE, ret);
+		if (ret == 1) {  // MID_DatMissing
+			printf("The main database file (drod5_0.dat) is missing." NEWLINE);
+			printf("Please run the game at least once to initialize the database." NEWLINE);
+		}
+		delete pDb;
+		return;
+	}
+
+	// Get or create a player
+	UINT dwPlayerID = pDb->GetPlayerID();
+	if (!dwPlayerID) {
+		CDbPlayer *pPlayer = pDb->Players.GetNew();
+		if (!pPlayer) {
+			printf("FAILED--Unable to create player." NEWLINE);
+			delete pDb;
+			return;
+		}
+		pPlayer->NameText = L"Player";
+		if (!pPlayer->Update()) {
+			printf("FAILED--Unable to save player." NEWLINE);
+			delete pPlayer;
+			delete pDb;
+			return;
+		}
+		dwPlayerID = pPlayer->dwPlayerID;
+		delete pPlayer;
+		pDb->Commit();
+	}
+
+	printf("Creating AI Tutorial hold..." NEWLINE);
+
+	// Create hold
+	CDbHold *pHold = pDb->Holds.GetNew();
+	if (!pHold) {
+		printf("FAILED--Unable to create hold." NEWLINE);
+		delete pDb;
+		return;
+	}
+
+	pHold->NameText = L"AI Tutorial";
+	pHold->DescriptionText = L"Tutorial level created by AI";
+	pHold->dwPlayerID = dwPlayerID;
+	pHold->status = CDbHold::Homemade;  // Set to Homemade so it shows in the hold list
+
+	if (!pHold->Update()) {
+		printf("FAILED--Unable to save hold." NEWLINE);
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	const UINT dwHoldID = pHold->dwHoldID;
+	printf("Created hold ID: %u" NEWLINE, dwHoldID);
+
+	// Create level
+	CDbLevel *pLevel = pDb->Levels.GetNew();
+	if (!pLevel) {
+		printf("FAILED--Unable to create level." NEWLINE);
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	pLevel->dwHoldID = dwHoldID;
+	pLevel->dwPlayerID = dwPlayerID;
+	pLevel->NameText = L"Level 1";
+
+	if (!pLevel->Update()) {
+		printf("FAILED--Unable to save level." NEWLINE);
+		delete pLevel;
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	const UINT dwLevelID = pLevel->dwLevelID;
+	printf("Created level ID: %u" NEWLINE, dwLevelID);
+
+	// Insert level into hold
+	pHold->InsertLevel(pLevel);
+
+	// Create room
+	CDbRoom *pRoom = pDb->Rooms.GetNew();
+	if (!pRoom) {
+		printf("FAILED--Unable to create room." NEWLINE);
+		delete pLevel;
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	pRoom->dwLevelID = dwLevelID;
+	pRoom->dwRoomX = 0;
+	pRoom->dwRoomY = 0;
+	pRoom->wRoomCols = 38;  // DISPLAY_COLS
+	pRoom->wRoomRows = 32;  // DISPLAY_ROWS
+	pRoom->style = L"Badlands";
+	pRoom->bIsRequired = true;
+	pRoom->bIsSecret = false;
+
+	if (!pRoom->AllocTileLayers()) {
+		printf("FAILED--Unable to allocate tile layers." NEWLINE);
+		delete pRoom;
+		delete pLevel;
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	// Initialize all tiles to floor first
+	const UINT dwSquareCount = pRoom->CalcRoomArea();
+	memset(pRoom->pszOSquares, T_FLOOR, dwSquareCount * sizeof(char));
+	memset(pRoom->pszFSquares, T_EMPTY, dwSquareCount * sizeof(char));
+	pRoom->ClearTLayer();
+
+	pRoom->coveredOSquares.Init(pRoom->wRoomCols, pRoom->wRoomRows);
+	pRoom->tileLights.Init(pRoom->wRoomCols, pRoom->wRoomRows);
+
+	// Create the path: straight line down the middle
+	const UINT centerX = pRoom->wRoomCols / 2;  // 19
+	const UINT startY = 0;  // Top
+	const UINT endY = pRoom->wRoomRows - 1;  // Bottom (31)
+
+	// Set walls everywhere except the center path
+	for (UINT y = 0; y < pRoom->wRoomRows; ++y) {
+		for (UINT x = 0; x < pRoom->wRoomCols; ++x) {
+			if (x != centerX) {
+				// Set wall
+				pRoom->pszOSquares[y * pRoom->wRoomCols + x] = T_WALL;
+			}
+			// else keep as floor (center path)
+		}
+	}
+
+	// Set exit stairs at bottom center
+	pRoom->pszOSquares[endY * pRoom->wRoomCols + centerX] = T_STAIRS;
+
+	// Create exit (stairs lead to entrance 0, which means level completion)
+	CExitData *pExit = new CExitData(0, centerX, centerX, endY, endY);
+	pRoom->Exits.push_back(pExit);
+
+	// Save room
+	if (!pRoom->Update()) {
+		printf("FAILED--Unable to save room." NEWLINE);
+		delete pRoom;
+		delete pLevel;
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	const UINT dwRoomID = pRoom->dwRoomID;
+	printf("Created room ID: %u" NEWLINE, dwRoomID);
+
+	// Create entrance (player starts at top center)
+	const UINT entranceX = centerX;
+	const UINT entranceY = startY;
+	CEntranceData *pEntrance = new CEntranceData(0, 0, dwRoomID,
+		entranceX, entranceY,
+		SE, true, CEntranceData::DD_Always, 0);
+	pEntrance->DescriptionText = L"Entrance 1";
+	pHold->AddEntrance(pEntrance);
+
+	// Update hold
+	if (!pHold->Update()) {
+		printf("FAILED--Unable to update hold." NEWLINE);
+		delete pRoom;
+		delete pLevel;
+		delete pHold;
+		delete pDb;
+		return;
+	}
+
+	// Commit changes
+	pDb->Commit();
+
+	printf("SUCCESS--Created AI Tutorial hold:" NEWLINE);
+	printf("  Hold: %u - AI Tutorial" NEWLINE, dwHoldID);
+	printf("  Level: %u - Level 1" NEWLINE, dwLevelID);
+	printf("  Room: %u - Start at (%u,%u), Exit at (%u,%u)" NEWLINE, 
+		dwRoomID, entranceX, entranceY, centerX, endY);
+
+	delete pRoom;
+	delete pLevel;
+	delete pHold;
+	delete pDb;
 }

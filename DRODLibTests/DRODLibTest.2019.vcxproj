@@ -212,6 +212,7 @@
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>false</Profile>
+      <AdditionalOptions>/ignore:4099 /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='SteamBuildDats|Win32'">

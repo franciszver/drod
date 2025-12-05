@@ -341,11 +341,7 @@ CTitleScreen::CTitleScreen() : CDrodScreen(SCR_Title)
 	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitlePlayMenu), MNU_PLAYMENU);
 	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitlePlayer), MNU_WHO);
 	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitleSettings), MNU_SETTINGS);
-	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitleDemo), MNU_DEMO);
 	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitleBuild), MNU_BUILD);
-	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitleHelp), MNU_HELP);
-	if (bDemo)
-		this->pMenu->AddText(g_pTheDB->GetMessageText(MID_BuyNow), MNU_BUY);
 	this->pMenu->AddText(g_pTheDB->GetMessageText(MID_TitleQuit), MNU_QUIT);
 
 	//Play sub-menu.
@@ -1342,7 +1338,7 @@ SCREENTYPE CTitleScreen::ProcessMenuSelection(
 		return SCR_EditSelect;
 
 		case MNU_QUIT:
-		return SelectSellScreen();
+		return SCR_None;  // Exit immediately without showing sell screen
 
 		case MNU_WHO:
 		{

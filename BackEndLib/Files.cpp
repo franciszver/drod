@@ -1625,7 +1625,10 @@ bool CFiles::WindowsCanBrowseUnicode()
 #ifdef WIN32
 	 OSVERSIONINFO versionInfo;
 	 versionInfo.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
+#pragma warning(push)
+#pragma warning(disable: 4996) // GetVersionEx is deprecated but still functional for our needs
 	if (!::GetVersionEx (&versionInfo)) {
+#pragma warning(pop)
 		// Can't get version - let's assume we can't browse files in unicode
 		return false;
 	}
