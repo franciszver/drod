@@ -1284,6 +1284,9 @@ void CGameScreen::OnBetweenEvents()
 						{
 							const SCREENTYPE eNextScreen = ProcessCommand(nCommand);
 							this->dwLastAutoExecuteTime = dwNow;
+							
+							// Ensure the current move is visible in the queue display
+							this->pMoveQueueWidget->EnsureCurrentMoveVisible();
 							this->pMoveQueueWidget->RequestPaint();
 
 							// Check for player death
@@ -1456,6 +1459,13 @@ void CGameScreen::OnClick(
 					if (nCommand != CMD_UNSPECIFIED)
 					{
 						ProcessCommand(nCommand);
+						// Check for player death and reset queue if needed
+						if (sCueEvents.HasAnyOccurred(IDCOUNT(CIDA_PlayerDied), CIDA_PlayerDied))
+						{
+							pQueue->ResetExecution();
+						}
+						// Ensure the current move is visible after stepping
+						this->pMoveQueueWidget->EnsureCurrentMoveVisible();
 						this->pMoveQueueWidget->RequestPaint();
 					}
 				}

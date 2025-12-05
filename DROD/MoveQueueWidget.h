@@ -25,13 +25,13 @@
 #include "MoveQueue.h"
 #include "../DRODLib/GameConstants.h"
 
-// Widget tags for move queue controls
-static const UINT TAG_MOVEQUEUE_PANEL = 1100;
-static const UINT TAG_QUEUE_PLAY = 1101;
-static const UINT TAG_QUEUE_STOP = 1102;
-static const UINT TAG_QUEUE_STEP = 1103;
-static const UINT TAG_QUEUE_RESET = 1104;
-static const UINT TAG_QUEUE_CLEAR = 1105;
+// Widget tags for move queue controls (1044-1049 range, used only on GameScreen)
+static const UINT TAG_MOVEQUEUE_PANEL = 1044;
+static const UINT TAG_QUEUE_PLAY = 1045;
+static const UINT TAG_QUEUE_STOP = 1046;
+static const UINT TAG_QUEUE_STEP = 1047;
+static const UINT TAG_QUEUE_RESET = 1048;
+static const UINT TAG_QUEUE_CLEAR = 1049;
 
 // Move pool commands available for queuing
 static const int MOVE_POOL_COMMANDS[] = {
@@ -59,6 +59,9 @@ public:
 	// State
 	bool IsAutoExecuting() const { return moveQueue.IsExecuting(); }
 	void SetAutoExecuting(bool bVal);
+	
+	// Scrolling
+	void EnsureCurrentMoveVisible();
 
 	// Painting
 	virtual void Paint(bool bUpdateRect = true);
@@ -102,7 +105,6 @@ private:
 	// Scrolling
 	void ScrollQueueUp();
 	void ScrollQueueDown();
-	void EnsureCurrentMoveVisible();
 	
 	// Data
 	CMoveQueue moveQueue;
