@@ -20,6 +20,34 @@ Windows, Linux and Mac OS X compilations are supported.
 Workspace files are included for Visual Studio 2005, Visual Studio 2008, Visual Studio 2013, and Visual Studio 2019 in the Master subdirectory.
 Workspace files for Microsoft Visual Studio 6.0 and Visual Studio 2002 are also present but likely outdated.
 
+##### Building on Windows 11 with Visual Studio 2022
+
+The dependency script (`Scripts/InstallDependencies.win32.vs2013.py`) has outdated URLs. Use **vcpkg** instead:
+
+1. **Install dependencies via vcpkg:**
+   ```powershell
+   git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
+   cd C:\vcpkg && .\bootstrap-vcpkg.bat && .\vcpkg integrate install
+   .\vcpkg install curl:x86-windows expat:x86-windows zlib:x86-windows libpng:x86-windows jsoncpp:x86-windows libjpeg-turbo:x86-windows sdl2-mixer:x86-windows
+   ```
+
+2. **Enable SDL_mixer** (FMOD 3.75 is unavailable): Add `#define USE_SDL_MIXER` to the top of `FrontEndLib/Sound.h`
+
+3. **Copy vcpkg outputs** to `Deps/` folder (headers to `Include/`, libs to `Library/Release/` and `Library/Debug/`, DLLs to `Dll/Release/`). Rename libs to match expected names (e.g., `libcurl.lib` to `libcurl_imp.lib`, `libpng16.lib` to `libpng.lib`, `jpeg.lib` to `jpeglib.lib`).
+
+4. **Update project files** (`DROD/*.2019.vcxproj`, `DRODUtil/*.2019.vcxproj`, `DRODLibTests/*.2019.vcxproj`):
+   - Replace `fmodvc.lib` with `SDL2_mixer.lib`
+   - Replace `json_vc71_libmt.lib` with `jsoncpp.lib`
+
+5. **Build:**
+   ```powershell
+   MSBuild.exe Master\Master.2019.sln /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143
+   ```
+
+6. **Copy DLLs** from `Deps/Dll/Release/` and vcpkg to `DROD/Release/`
+
+7. **Set up game data:** Copy `Data/` folder contents (including `Bitmaps/`) from official DROD Demo installation to `DROD/Release/Data/`. Download fonts from http://fonts.tom7.com/ (`tomnr.ttf`, `epilog.ttf`) to `Data/Fonts/`.
+
 ##### Linux builds
 
 Ninja generator and build files for Linux are included in Master/Linux. cd to Master/Linux and run './ninjamaker' then './build' or './build -clean' for clean rebuild.

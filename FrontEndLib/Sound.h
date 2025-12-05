@@ -32,6 +32,9 @@
 #ifndef SOUND_H
 #define SOUND_H
 
+// Use SDL_mixer instead of FMOD (FMOD 3.75 is no longer available)
+#define USE_SDL_MIXER
+
 #ifdef WIN32
 #pragma warning(disable:4786)
 #endif
