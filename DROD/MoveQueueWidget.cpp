@@ -29,15 +29,15 @@
 #include <BackEndLib/Assert.h>
 
 // Layout constants
-static const UINT CX_MOVE_ICON = 36;
-static const UINT CY_MOVE_ICON = 28;
+static const UINT CX_MOVE_ICON = 30;
+static const UINT CY_MOVE_ICON = 22;
 static const UINT CX_MOVE_POOL_COLS = 3;
 static const UINT CY_MOVE_POOL_ROWS = 4;
-static const UINT CX_BUTTON = 28;
-static const UINT CY_BUTTON = 22;
-static const UINT CY_BUTTON_SPACING = 2;
-static const UINT CY_SECTION_SPACING = 4;
-static const UINT CY_QUEUE_ITEM = 24;
+static const UINT CX_BUTTON = 26;
+static const UINT CY_BUTTON = 18;
+static const UINT CY_BUTTON_SPACING = 1;
+static const UINT CY_SECTION_SPACING = 2;
+static const UINT CY_QUEUE_ITEM = 20;
 
 // Colors
 static const SURFACECOLOR MovePoolBgColor = {40, 40, 50};
@@ -146,12 +146,14 @@ void CMoveQueueWidget::CalcAreas()
 	queueRect.x = this->x + 2;
 	queueRect.y = controlsRect.y + controlsRect.h + CY_SECTION_SPACING;
 	queueRect.w = this->w - 4;
-	queueRect.h = (this->y + this->h) - queueRect.y - 2;
-	wVisibleQueueItems = queueRect.h / CY_QUEUE_ITEM;
+	int availableHeight = (int)(this->y + this->h) - queueRect.y - 2;
+	queueRect.h = availableHeight > 0 ? availableHeight : 0;
+	wVisibleQueueItems = queueRect.h > 0 ? queueRect.h / CY_QUEUE_ITEM : 0;
 }
 
 void CMoveQueueWidget::Paint(bool bUpdateRect)
 {
+	CalcAreas(); // Ensure areas are current before painting
 	SDL_Surface* pDestSurface = GetDestSurface();
 	SURFACECOLOR bgColor = {25, 25, 35};
 	SDL_Rect panelRect = {(int)this->x, (int)this->y, (int)this->w, (int)this->h};
@@ -206,6 +208,18 @@ void CMoveQueueWidget::DrawQueue(SDL_Surface* pDestSurface)
 	DrawFilledRect(queueRect, QueueBgColor, pDestSurface);
 	const std::vector<QueuedMove>& moves = moveQueue.GetMoves();
 	size_t currentIndex = moveQueue.GetCurrentIndex();
+
+	// If no room to display items but there are moves, show a count
+	if (wVisibleQueueItems == 0 && moves.size() > 0)
+	{
+		WCHAR wszCount[16];
+		wszCount[0] = We('[');
+		_itoW((int)moves.size(), wszCount + 1, 10);
+		wcscat(wszCount, WS("]"));
+		int textY = controlsRect.y + controlsRect.h + 2;
+		g_pTheFM->DrawTextXY(F_Small, wszCount, pDestSurface, this->x + 4, textY);
+		return;
+	}
 
 	UINT drawY = queueRect.y;
 	for (UINT i = wTopQueueIndex; i < moves.size() && i < wTopQueueIndex + wVisibleQueueItems; ++i)
@@ -327,6 +341,7 @@ int CMoveQueueWidget::GetButtonAt(int x, int y) const
 
 void CMoveQueueWidget::HandleMouseDown(const SDL_MouseButtonEvent &Button)
 {
+	CalcAreas(); // Ensure hit areas are current
 	int x = Button.x;
 	int y = Button.y;
 
@@ -362,6 +377,7 @@ void CMoveQueueWidget::HandleMouseDown(const SDL_MouseButtonEvent &Button)
 		nDragCommand = MOVE_POOL_COMMANDS[poolIndex];
 		nDragQueueIndex = -1;
 		nDragX = x; nDragY = y;
+		RequestPaint();
 		return;
 	}
 
@@ -372,6 +388,7 @@ void CMoveQueueWidget::HandleMouseDown(const SDL_MouseButtonEvent &Button)
 		nDragCommand = moveQueue.GetMove(queueIndex).command;
 		nDragQueueIndex = queueIndex;
 		nDragX = x; nDragY = y;
+		RequestPaint();
 		return;
 	}
 
@@ -382,12 +399,17 @@ void CMoveQueueWidget::HandleMouseDown(const SDL_MouseButtonEvent &Button)
 void CMoveQueueWidget::HandleMouseUp(const SDL_MouseButtonEvent &Button)
 {
 	if (Button.button != SDL_BUTTON_LEFT) return;
+	CalcAreas(); // Ensure hit areas are current
 	int x = Button.x;
 	int y = Button.y;
 
 	if (bDragging)
 	{
-		if (IS_IN_RECT(x, y, queueRect))
+		// Accept drops in queue area OR below the controls (expanded drop zone)
+		bool bInDropZone = IS_IN_RECT(x, y, queueRect) || 
+			(x >= this->x && x < (int)(this->x + this->w) && 
+			 y >= controlsRect.y + controlsRect.h && y < (int)(this->y + this->h));
+		if (bInDropZone)
 		{
 			int dropIndex = GetQueueIndexAt(x, y);
 			if (dropIndex < 0) dropIndex = moveQueue.GetQueueSize();
