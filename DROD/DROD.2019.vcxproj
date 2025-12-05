@@ -659,6 +659,8 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MapWidget.cpp" />
     <ClCompile Include="ModScreen.cpp" />
+    <ClCompile Include="MoveQueue.cpp" />
+    <ClCompile Include="MoveQueueWidget.cpp" />
     <ClCompile Include="NewPlayerScreen.cpp" />
     <ClCompile Include="NoticeEffect.cpp" />
     <ClCompile Include="ParticleExplosionEffect.cpp" />
@@ -741,6 +743,8 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="MapWidget.h" />
     <ClInclude Include="ModScreen.h" />
+    <ClInclude Include="MoveQueue.h" />
+    <ClInclude Include="MoveQueueWidget.h" />
     <ClInclude Include="NeatherStrikesOrbEffect.h" />
     <ClInclude Include="NewPlayerScreen.h" />
     <ClInclude Include="NoticeEffect.h" />

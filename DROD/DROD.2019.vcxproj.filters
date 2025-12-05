@@ -118,6 +118,12 @@
     <ClCompile Include="ModScreen.cpp">
       <Filter>Screens</Filter>
     </ClCompile>
+    <ClCompile Include="MoveQueue.cpp">
+      <Filter>Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveQueueWidget.cpp">
+      <Filter>Widgets</Filter>
+    </ClCompile>
     <ClCompile Include="NewPlayerScreen.cpp">
       <Filter>Screens</Filter>
     </ClCompile>
@@ -359,6 +365,12 @@
     </ClInclude>
     <ClInclude Include="ModScreen.h">
       <Filter>Screens</Filter>
+    </ClInclude>
+    <ClInclude Include="MoveQueue.h">
+      <Filter>Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="MoveQueueWidget.h">
+      <Filter>Widgets</Filter>
     </ClInclude>
     <ClInclude Include="NeatherStrikesOrbEffect.h">
       <Filter>Effects</Filter>

@@ -61,6 +61,7 @@ class CFaceWidget;
 class CClockWidget;
 class CFiredCharacterCommand;
 class CEntranceSelectDialogWidget;
+class CMoveQueueWidget;
 class CRoomEffectList;
 class CSubtitleEffect;
 struct VisualEffectInfo;
@@ -214,6 +215,10 @@ private:
 	CDialogWidget *pMenuDialog;
 	CEntranceSelectDialogWidget *pSpeechBox;
 	CMapWidget *pBigMapWidget;
+	CMoveQueueWidget *pMoveQueueWidget;
+
+	// Move queue auto-execution
+	Uint32 dwLastAutoExecuteTime;
 
 	//Speech.
 	deque<CFiredCharacterCommand*> speech; //speech dialog queued to play

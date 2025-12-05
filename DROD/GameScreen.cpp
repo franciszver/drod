@@ -62,6 +62,7 @@
 #include "ClockWidget.h"
 #include "FaceWidget.h"
 #include "MapWidget.h"
+#include "MoveQueueWidget.h"
 #include "RoomWidget.h"
 #include "RoomEffectList.h"
 
@@ -449,6 +450,9 @@ CGameScreen::CGameScreen(const SCREENTYPE eScreen) : CRoomScreen(eScreen)
 	, pMenuDialog(NULL)
 	, pSpeechBox(NULL)
 	, pBigMapWidget(NULL)
+	, pMoveQueueWidget(NULL)
+
+	, dwLastAutoExecuteTime(0)
 
 	, dwNextSpeech(0)
 	, bShowingSubtitlesWithVoice(true)
@@ -538,6 +542,15 @@ CGameScreen::CGameScreen(const SCREENTYPE eScreen) : CRoomScreen(eScreen)
 
 	this->pClockWidget = new CClockWidget(TAG_CLOCK, X_CLOCK, Y_CLOCK, CX_CLOCK, CY_CLOCK);
 	AddWidget(this->pClockWidget);
+
+	// Move queue widget - positioned below clock
+	static const int X_MOVEQUEUE = 4;
+	static const int Y_MOVEQUEUE = 570;
+	static const UINT CX_MOVEQUEUE = 155;
+	static const UINT CY_MOVEQUEUE = 150;
+	this->pMoveQueueWidget = new CMoveQueueWidget(TAG_MOVEQUEUE_PANEL, 
+		X_MOVEQUEUE, Y_MOVEQUEUE, CX_MOVEQUEUE, CY_MOVEQUEUE);
+	AddWidget(this->pMoveQueueWidget);
 
 	CLabelWidget *pLabel = new CLabelWidget(TAG_ESC, X_ESC, Y_ESC, CX_ESC, CY_ESC, F_ButtonWhite,
 			g_pTheDB->GetMessageText(MID_EscMenu));
@@ -1251,6 +1264,56 @@ void CGameScreen::OnBetweenEvents()
 				g_pTheSound->PlaySoundEffect(SEID_THUNDER, NULL, NULL, false, 1.0f + fRAND_MID(0.2f));
 			}
 		}
+
+		// Move queue auto-execution
+		if (this->pMoveQueueWidget && this->pMoveQueueWidget->IsAutoExecuting())
+		{
+			// Don't auto-execute if dialog is showing or questions are pending
+			if (!this->bIsDialogDisplayed && !this->bNeedToProcessDelayedQuestions)
+			{
+				// Check if animation is complete (wait for move duration)
+				const Uint32 dwNow = SDL_GetTicks();
+				const Uint32 dwMoveDuration = this->pRoomWidget->GetMoveDuration();
+				if (dwNow - this->dwLastAutoExecuteTime >= dwMoveDuration)
+				{
+					CMoveQueue* pQueue = this->pMoveQueueWidget->GetMoveQueue();
+					if (pQueue && pQueue->HasMoreMoves())
+					{
+						int nCommand = pQueue->GetNextMove();
+						if (nCommand != CMD_UNSPECIFIED)
+						{
+							const SCREENTYPE eNextScreen = ProcessCommand(nCommand);
+							this->dwLastAutoExecuteTime = dwNow;
+							this->pMoveQueueWidget->RequestPaint();
+
+							// Check for player death
+							if (sCueEvents.HasAnyOccurred(IDCOUNT(CIDA_PlayerDied), CIDA_PlayerDied))
+							{
+								// Stop execution and reset position on death
+								pQueue->StopExecution();
+								pQueue->ResetExecution();
+								this->pMoveQueueWidget->RequestPaint();
+							}
+
+							if (eNextScreen != SCR_Game)
+							{
+								if (IsDeactivating())
+									SetDestScreenType(eNextScreen);
+								else
+									GoToScreen(eNextScreen);
+								return;
+							}
+						}
+					}
+					else
+					{
+						// No more moves - stop execution
+						pQueue->StopExecution();
+						this->pMoveQueueWidget->RequestPaint();
+					}
+				}
+			}
+		}
 	}
 
 	CRoomScreen::OnBetweenEvents();
@@ -1377,6 +1440,34 @@ void CGameScreen::OnClick(
 
 			ShowToolTip(wstrSignText.c_str());
 		}
+		break;
+
+		// Move queue control buttons
+		case TAG_QUEUE_STEP:
+			// Execute single move from queue
+			if (this->pMoveQueueWidget && this->pCurrentGame)
+			{
+				CMoveQueue* pQueue = this->pMoveQueueWidget->GetMoveQueue();
+				if (pQueue && pQueue->HasMoreMoves())
+				{
+					pQueue->StartExecution();
+					int nCommand = pQueue->GetNextMove();
+					pQueue->StopExecution();
+					if (nCommand != CMD_UNSPECIFIED)
+					{
+						ProcessCommand(nCommand);
+						this->pMoveQueueWidget->RequestPaint();
+					}
+				}
+			}
+		break;
+		case TAG_QUEUE_PLAY:
+		case TAG_QUEUE_STOP:
+		case TAG_QUEUE_RESET:
+		case TAG_QUEUE_CLEAR:
+			// These are handled by the widget itself
+			if (this->pMoveQueueWidget)
+				this->pMoveQueueWidget->RequestPaint();
 		break;
 	}
 }
@@ -1510,6 +1601,16 @@ void CGameScreen::OnKeyDown(
 
 	//Check for a game command.
 	int nCommand = GetCommandForKeysym(Key.keysym.sym);
+
+	// Block movement commands during move queue auto-execution
+	if (this->pMoveQueueWidget && this->pMoveQueueWidget->IsAutoExecuting())
+	{
+		if (bIsMovementCommand(nCommand) || nCommand == CMD_WAIT || 
+			nCommand == CMD_C || nCommand == CMD_CC)
+		{
+			return; // Block manual movement during auto-execution
+		}
+	}
 	bool bMacro = (Key.keysym.mod & KMOD_CTRL) != 0; //two-move combo activation
 
 	//Battle key indicates performing the reverse of the last movement command.
