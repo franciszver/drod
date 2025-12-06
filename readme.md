@@ -1,10 +1,31 @@
-# DROD 5
-# DROD RPG
+# Puzzle Dungeon: Order is Chaos
+### (Based on DROD 5 / DROD RPG)
 **(c) Caravel Games 2005-2023**
 
 ----------------------------
 
-### Building the application
+## Customizations
+
+This fork includes the following modifications:
+
+### Title Screen
+- Custom "Puzzle Dungeon: Order is Chaos" branding replaces DROD title
+- Custom logo loaded from `Data/Bitmaps/PuzzleDungeon.png`
+- Caravel Games logos hidden
+
+### Quality of Life
+- Window close (X button) quits immediately instead of showing promotional screen
+
+### Move Queue Feature
+- New widget for queuing and auto-executing player moves
+- Drag-and-drop moves from the move pool to the queue
+- +/- buttons to adjust repeat count for each move
+- Play/Stop/Step/Reset/Clear controls
+- Right-click context menu for additional options
+
+----------------------------
+
+## Building the application
 
 This is the source used with DROD: The Second Sky and also with DROD RPG.
 It may be used under the terms of the MPL and other licenses, described in the Licenses subdirectory.
@@ -28,7 +49,7 @@ The dependency script (`Scripts/InstallDependencies.win32.vs2013.py`) has outdat
    ```powershell
    git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
    cd C:\vcpkg && .\bootstrap-vcpkg.bat && .\vcpkg integrate install
-   .\vcpkg install curl:x86-windows expat:x86-windows zlib:x86-windows libpng:x86-windows jsoncpp:x86-windows libjpeg-turbo:x86-windows sdl2-mixer:x86-windows
+   .\vcpkg install curl:x86-windows expat:x86-windows zlib:x86-windows libpng:x86-windows jsoncpp:x86-windows libjpeg-turbo:x86-windows sdl2-mixer:x86-windows libogg:x86-windows libvorbis:x86-windows wavpack:x86-windows
    ```
 
 2. **Enable SDL_mixer** (FMOD 3.75 is unavailable): Add `#define USE_SDL_MIXER` to the top of `FrontEndLib/Sound.h`
@@ -39,14 +60,51 @@ The dependency script (`Scripts/InstallDependencies.win32.vs2013.py`) has outdat
    - Replace `fmodvc.lib` with `SDL2_mixer.lib`
    - Replace `json_vc71_libmt.lib` with `jsoncpp.lib`
 
-5. **Build:**
+5. **Build using the build script (recommended):**
    ```powershell
-   MSBuild.exe Master\Master.2019.sln /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143
+   .\build-release.ps1
+   ```
+   
+   Or build manually:
+   ```powershell
+   & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" Master\Master.2019.sln /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:PostBuildEventUseInBuild=false /v:minimal
    ```
 
-6. **Copy DLLs** from `Deps/Dll/Release/` and vcpkg to `DROD/Release/`
+6. **Copy DLLs** from `Deps/Dll/Release/` and vcpkg (`C:\vcpkg\installed\x86-windows\bin\`) to `DROD/Release/`:
+   - SDL2.dll, SDL2_mixer.dll, SDL2_ttf.dll
+   - libcurl.dll, zlib1.dll, libpng16.dll
+   - jpeg62.dll, jsoncpp.dll
+   - ogg.dll, vorbis.dll, vorbisfile.dll, wavpackdll.dll
+   - libfreetype-6.dll
 
-7. **Set up game data:** Copy `Data/` folder contents (including `Bitmaps/`) from official DROD Demo installation to `DROD/Release/Data/`. Download fonts from http://fonts.tom7.com/ (`tomnr.ttf`, `epilog.ttf`) to `Data/Fonts/`.
+7. **Set up game data:** 
+   - Copy `Data/` folder contents from official DROD Demo installation to `DROD/Release/Data/`
+   - Download fonts from http://fonts.tom7.com/ (`tomnr.ttf`, `epilog.ttf`) to `Data/Fonts/`
+   - For custom branding: Place `PuzzleDungeon.png` in `DROD/Release/Data/Bitmaps/`
+
+##### Using Git Worktrees
+
+If you're using git worktrees for development, the `Deps` and `DepsSrc` folders won't be present in the worktree. Create symlinks to the main repository:
+
+```powershell
+# From the worktree directory
+cmd /c mklink /D Deps "..\drod\Deps"
+cmd /c mklink /D DepsSrc "..\drod\DepsSrc"
+```
+
+##### build-release.ps1
+
+A PowerShell build script is included that automates the build process:
+
+```powershell
+.\build-release.ps1
+```
+
+The script:
+- Kills any running DROD instance before building
+- Builds the Release configuration with VS2022 toolset (v143)
+- Copies required DLLs from `Deps/Dll/Release/` and vcpkg
+- Reports build status and executable location
 
 ##### Linux builds
 
