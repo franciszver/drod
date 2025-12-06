@@ -28,18 +28,18 @@
 
 #include <BackEndLib/Assert.h>
 
-// Layout constants
-static const UINT CX_MOVE_ICON = 36;
-static const UINT CY_MOVE_ICON = 28;
+// Layout constants - compact to fit more items
+static const UINT CX_MOVE_ICON = 28;
+static const UINT CY_MOVE_ICON = 18;
 static const UINT CX_MOVE_POOL_COLS = 3;
 static const UINT CY_MOVE_POOL_ROWS = 4;
-static const UINT CX_BUTTON = 28;
-static const UINT CY_BUTTON = 22;
-static const UINT CY_BUTTON_SPACING = 2;
-static const UINT CY_SECTION_SPACING = 4;
-static const UINT CY_QUEUE_ITEM = 28;
-static const UINT CX_REPEAT_BUTTON = 18;
-static const UINT CY_REPEAT_BUTTON = 12;
+static const UINT CX_BUTTON = 24;
+static const UINT CY_BUTTON = 16;
+static const UINT CY_BUTTON_SPACING = 1;
+static const UINT CY_SECTION_SPACING = 2;
+static const UINT CY_QUEUE_ITEM = 18;
+static const UINT CX_REPEAT_BUTTON = 14;
+static const UINT CY_REPEAT_BUTTON = 14;
 
 // Colors
 static const SURFACECOLOR MovePoolBgColor = {40, 40, 50};
@@ -230,45 +230,44 @@ void CMoveQueueWidget::DrawQueue(SDL_Surface* pDestSurface)
 
 		// Draw move icon (compact)
 		int iconX = queueRect.x + 2;
-		int iconY = drawY + 2;
+		int iconY = drawY + 1;
 		DrawMoveIcon(pDestSurface, move.command, iconX, iconY, bDimmed, bHighlight, 1);
 		
-		// Draw repeat count display and +/- buttons
-		int repeatX = iconX + CX_MOVE_ICON + 4;
-		int repeatY = drawY + 2;
+		// Draw repeat count and +/- buttons (compact layout)
+		int repeatX = iconX + CX_MOVE_ICON + 2;
+		int btnY = drawY + 2;
 		
 		// Draw repeat count
 		WCHAR wszCount[8];
 		wszCount[0] = We('x');
 		_itoW(move.repeatCount, wszCount + 1, 10);
-		g_pTheFM->DrawTextXY(F_Small, wszCount, pDestSurface, repeatX, repeatY + 2);
+		g_pTheFM->DrawTextXY(F_Small, wszCount, pDestSurface, repeatX, btnY);
 		
 		// Draw +/- buttons
-		int btnY = repeatY;
-		int plusX = repeatX + 25;
-		int minusX = plusX + CX_REPEAT_BUTTON + 2;
+		int plusX = repeatX + 20;
+		int minusX = plusX + CX_REPEAT_BUTTON + 1;
 		
-		// Plus button
+		// Plus button (green)
 		static const WCHAR wszPlus[] = {We('+'),We(0)};
 		SDL_Rect plusRect = {plusX, btnY, CX_REPEAT_BUTTON, CY_REPEAT_BUTTON};
-		SURFACECOLOR plusBg = {50, 80, 50};
+		SURFACECOLOR plusBg = {50, 100, 50};
 		DrawFilledRect(plusRect, plusBg, pDestSurface);
-		g_pTheFM->DrawTextXY(F_Small, wszPlus, pDestSurface, plusX + 4, btnY);
+		g_pTheFM->DrawTextXY(F_Small, wszPlus, pDestSurface, plusX + 3, btnY);
 		
-		// Minus button
+		// Minus button (red)
 		static const WCHAR wszMinus[] = {We('-'),We(0)};
 		SDL_Rect minusRect = {minusX, btnY, CX_REPEAT_BUTTON, CY_REPEAT_BUTTON};
-		SURFACECOLOR minusBg = {80, 50, 50};
+		SURFACECOLOR minusBg = {100, 50, 50};
 		DrawFilledRect(minusRect, minusBg, pDestSurface);
-		g_pTheFM->DrawTextXY(F_Small, wszMinus, pDestSurface, minusX + 5, btnY);
+		g_pTheFM->DrawTextXY(F_Small, wszMinus, pDestSurface, minusX + 4, btnY);
 		
 		// Draw delete (X) button on right edge
 		int delX = queueRect.x + queueRect.w - CX_REPEAT_BUTTON - 2;
 		SDL_Rect delRect = {delX, btnY, CX_REPEAT_BUTTON, CY_REPEAT_BUTTON};
-		SURFACECOLOR delBg = {80, 40, 40};
+		SURFACECOLOR delBg = {120, 40, 40};
 		DrawFilledRect(delRect, delBg, pDestSurface);
 		static const WCHAR wszDel[] = {We('X'),We(0)};
-		g_pTheFM->DrawTextXY(F_Small, wszDel, pDestSurface, delX + 4, btnY);
+		g_pTheFM->DrawTextXY(F_Small, wszDel, pDestSurface, delX + 3, btnY);
 
 		drawY += CY_QUEUE_ITEM;
 	}
@@ -305,26 +304,16 @@ void CMoveQueueWidget::DrawMoveIcon(SDL_Surface* pDestSurface, int command,
 	SDL_Rect iconRect = {x, y, CX_MOVE_ICON, CY_MOVE_ICON};
 	SURFACECOLOR bgColor = bHighlight ? HighlightColor : (bDimmed ? DimColor : ButtonBgColor);
 	DrawFilledRect(iconRect, bgColor, pDestSurface);
+	SURFACECOLOR borderColor = {100, 90, 80};
+	DrawRect(iconRect, borderColor, pDestSurface);
 	
-	// 3D border
-	SURFACECOLOR lightColor = {220, 200, 170};
-	SURFACECOLOR darkColor = {100, 80, 60};
-	SDL_Rect edge = {x, y, CX_MOVE_ICON, 1};
-	DrawFilledRect(edge, lightColor, pDestSurface);
-	edge = {x, y, 1, CY_MOVE_ICON};
-	DrawFilledRect(edge, lightColor, pDestSurface);
-	edge = {x, y + (int)CY_MOVE_ICON - 1, CX_MOVE_ICON, 1};
-	DrawFilledRect(edge, darkColor, pDestSurface);
-	edge = {x + (int)CX_MOVE_ICON - 1, y, 1, CY_MOVE_ICON};
-	DrawFilledRect(edge, darkColor, pDestSurface);
-	
-	// Draw text centered with F_Button font
+	// Draw text centered with F_Small font (compact)
 	const WCHAR* text = GetMoveDisplayText(command);
 	UINT textW, textH;
-	g_pTheFM->GetTextWidthHeight(F_Button, text, textW, textH);
+	g_pTheFM->GetTextWidthHeight(F_Small, text, textW, textH);
 	int textX = x + ((int)CX_MOVE_ICON - (int)textW) / 2;
 	int textY = y + ((int)CY_MOVE_ICON - (int)textH) / 2;
-	g_pTheFM->DrawTextXY(F_Button, text, pDestSurface, textX, textY);
+	g_pTheFM->DrawTextXY(F_Small, text, pDestSurface, textX, textY);
 	
 	if (repeatCount > 1)
 	{
@@ -332,7 +321,7 @@ void CMoveQueueWidget::DrawMoveIcon(SDL_Surface* pDestSurface, int command,
 		_itoW(repeatCount, wszCount, 10);
 		UINT cw, ch;
 		g_pTheFM->GetTextWidthHeight(F_Small, wszCount, cw, ch);
-		g_pTheFM->DrawTextXY(F_Small, wszCount, pDestSurface, x + CX_MOVE_ICON - cw - 2, y + CY_MOVE_ICON - ch - 1);
+		g_pTheFM->DrawTextXY(F_Small, wszCount, pDestSurface, x + CX_MOVE_ICON - cw - 1, y + CY_MOVE_ICON - ch);
 	}
 }
 
@@ -341,25 +330,15 @@ void CMoveQueueWidget::DrawButton(SDL_Surface* pDestSurface, const SDL_Rect& rec
 	SURFACECOLOR bgColor = bPressed ? ButtonPressedColor : ButtonBgColor;
 	SDL_Rect buttonRect = {rect.x, rect.y, rect.w, rect.h};
 	DrawFilledRect(buttonRect, bgColor, pDestSurface);
+	SURFACECOLOR borderColor = {100, 90, 80};
+	DrawRect(buttonRect, borderColor, pDestSurface);
 	
-	// 3D border effect
-	SURFACECOLOR lightColor = bPressed ? SURFACECOLOR{120, 100, 70} : SURFACECOLOR{220, 200, 170};
-	SURFACECOLOR darkColor = bPressed ? SURFACECOLOR{220, 200, 170} : SURFACECOLOR{100, 80, 60};
-	SDL_Rect edge = {rect.x, rect.y, rect.w, 1};
-	DrawFilledRect(edge, lightColor, pDestSurface);
-	edge = {rect.x, rect.y, 1, rect.h};
-	DrawFilledRect(edge, lightColor, pDestSurface);
-	edge = {rect.x, rect.y + rect.h - 1, rect.w, 1};
-	DrawFilledRect(edge, darkColor, pDestSurface);
-	edge = {rect.x + rect.w - 1, rect.y, 1, rect.h};
-	DrawFilledRect(edge, darkColor, pDestSurface);
-	
-	// Draw text centered with F_Button font
+	// Draw text centered with F_Small font (compact)
 	UINT textW, textH;
-	g_pTheFM->GetTextWidthHeight(F_Button, text, textW, textH);
+	g_pTheFM->GetTextWidthHeight(F_Small, text, textW, textH);
 	int textX = rect.x + ((int)rect.w - (int)textW) / 2;
 	int textY = rect.y + ((int)rect.h - (int)textH) / 2;
-	g_pTheFM->DrawTextXY(F_Button, text, pDestSurface, textX, textY);
+	g_pTheFM->DrawTextXY(F_Small, text, pDestSurface, textX, textY);
 }
 
 void CMoveQueueWidget::DrawRunningIndicator(SDL_Surface* pDestSurface)
@@ -401,21 +380,31 @@ int CMoveQueueWidget::GetButtonAt(int x, int y) const
 // Sets outQueueIndex to the queue item index
 int CMoveQueueWidget::GetQueueItemButtonAt(int x, int y, int& outQueueIndex) const
 {
-	if (!IS_IN_RECT(x, y, queueRect)) { outQueueIndex = -1; return -1; }
+	// Check if within the widget bounds (not just queueRect, for items that might extend)
+	if (x < this->x || x >= (int)(this->x + this->w) || 
+	    y < queueRect.y || y >= (int)(this->y + this->h))
+	{
+		outQueueIndex = -1;
+		return -1;
+	}
 	
 	const std::vector<QueuedMove>& moves = moveQueue.GetMoves();
 	UINT drawY = queueRect.y;
 	
-	for (UINT i = wTopQueueIndex; i < moves.size() && i < wTopQueueIndex + wVisibleQueueItems; ++i)
+	// Check ALL items that could be displayed, not just wVisibleQueueItems
+	for (UINT i = wTopQueueIndex; i < moves.size(); ++i)
 	{
+		// Stop if we've gone past the widget bounds
+		if ((int)drawY >= (int)(this->y + this->h)) break;
+		
 		if (y >= (int)drawY && y < (int)(drawY + CY_QUEUE_ITEM))
 		{
 			outQueueIndex = i;
 			int iconX = queueRect.x + 2;
-			int repeatX = iconX + CX_MOVE_ICON + 4;
+			int repeatX = iconX + CX_MOVE_ICON + 2;
 			int btnY = drawY + 2;
-			int plusX = repeatX + 25;
-			int minusX = plusX + CX_REPEAT_BUTTON + 2;
+			int plusX = repeatX + 20;
+			int minusX = plusX + CX_REPEAT_BUTTON + 1;
 			int delX = queueRect.x + queueRect.w - CX_REPEAT_BUTTON - 2;
 			
 			SDL_Rect plusRect = {plusX, btnY, CX_REPEAT_BUTTON, CY_REPEAT_BUTTON};
