@@ -543,11 +543,11 @@ CGameScreen::CGameScreen(const SCREENTYPE eScreen) : CRoomScreen(eScreen)
 	this->pClockWidget = new CClockWidget(TAG_CLOCK, X_CLOCK, Y_CLOCK, CX_CLOCK, CY_CLOCK);
 	AddWidget(this->pClockWidget);
 
-	// Move queue widget - positioned between face and clock
+	// Move queue widget - positioned below clock
 	static const int X_MOVEQUEUE = 4;
-	static const int Y_MOVEQUEUE = 200;
+	static const int Y_MOVEQUEUE = 185;
 	static const UINT CX_MOVEQUEUE = 155;
-	static const UINT CY_MOVEQUEUE = 200;
+	static const UINT CY_MOVEQUEUE = 385;
 	this->pMoveQueueWidget = new CMoveQueueWidget(TAG_MOVEQUEUE_PANEL, 
 		X_MOVEQUEUE, Y_MOVEQUEUE, CX_MOVEQUEUE, CY_MOVEQUEUE);
 	AddWidget(this->pMoveQueueWidget);

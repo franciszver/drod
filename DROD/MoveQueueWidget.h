@@ -81,6 +81,7 @@ private:
 	int GetMovePoolIndexAt(int x, int y) const;
 	int GetQueueIndexAt(int x, int y) const;
 	int GetButtonAt(int x, int y) const;
+	int GetQueueItemButtonAt(int x, int y, int& outQueueIndex) const;
 	
 	// Drawing helpers
 	void DrawMovePool(SDL_Surface* pDestSurface);
