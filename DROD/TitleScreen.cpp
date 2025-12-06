@@ -308,21 +308,28 @@ CTitleScreen::CTitleScreen() : CDrodScreen(SCR_Title)
 	//TCB
 	AddWidget(new CImageWidget(TAG_TITLE_TCB, X_TITLE_TCB, Y_TITLE_TCB, wszTitleLogoTCB));
 
-	//TSS
-	CImageWidget *pImage = new CImageWidget(TAG_TITLE_TSS, X_TITLE_TSS, Y_TITLE_TSS, wszTitleLogoTSS);
-	pImage->SetAlpha(1, true);
+	//TSS - moved off-screen (replaced with custom title)
+	CImageWidget *pImage = new CImageWidget(TAG_TITLE_TSS, -2000, -2000, wszTitleLogoTSS);
 	AddWidget(pImage);
 
-	//TSS subtitle
-	pImage = new CImageWidget(TAG_TITLE_TSS_2, X_TITLE_TSS_2, Y_TITLE_TSS_2, wszTitleLogoTSS_2);
-	pImage->SetAlpha(1, true);
+	//TSS subtitle - moved off-screen
+	pImage = new CImageWidget(TAG_TITLE_TSS_2, -2000, -2000, wszTitleLogoTSS_2);
 	AddWidget(pImage);
 
-	//Caravel logo.
-	AddWidget(new CImageWidget(TAG_CARAVEL_LOGO_SE,
-		CScreen::CX_SCREEN - CX_CARAVEL_LOGO, CScreen::CY_SCREEN - CY_CARAVEL_LOGO, wszCaravelLogoSE));
-	AddWidget(new CImageWidget(TAG_CARAVEL_LOGO_SW,
-		0, CScreen::CY_SCREEN - CY_CARAVEL_LOGO, wszCaravelLogoSW));
+	//Custom title image: Puzzle Dungeon - centered at top
+	static const WCHAR wszCustomTitle[] = {
+		We('D'),We('a'),We('t'),We('a'),We('/'),We('B'),We('i'),We('t'),We('m'),We('a'),We('p'),We('s'),We('/'),
+		We('P'),We('u'),We('z'),We('z'),We('l'),We('e'),We('D'),We('u'),We('n'),We('g'),We('e'),We('o'),We('n'),
+		We('.'),We('p'),We('n'),We('g'),We(0)
+	};
+	CImageWidget *pCustomTitle = new CImageWidget(0L, 365, 50, wszCustomTitle);
+	AddWidget(pCustomTitle);
+
+	//Caravel logo - moved off-screen
+	CImageWidget *pCaravelSE = new CImageWidget(TAG_CARAVEL_LOGO_SE, -2000, -2000, wszCaravelLogoSE);
+	AddWidget(pCaravelSE);
+	CImageWidget *pCaravelSW = new CImageWidget(TAG_CARAVEL_LOGO_SW, -2000, -2000, wszCaravelLogoSW);
+	AddWidget(pCaravelSW);
 
 	//Option menu.
 #ifdef RUSSIAN_BUILD

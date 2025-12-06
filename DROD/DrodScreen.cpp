@@ -2703,14 +2703,9 @@ bool CDrodScreen::IsStyleOnDisk(
 bool CDrodScreen::OnQuit()
 //Called when SDL_QUIT event is received.
 {
-	//If a Quit event is received while a quit prompt is already active,
-	//then this serves as confirmation of the quit prompt.
-	if (this->bQuitPrompt)
-		return true;
-
-	//Instead of quitting, go to the sell screen when this happens.
-	GoToScreen(SelectSellScreen());
-	return false;
+	//Quit immediately when window is closed
+	GoToScreen(SCR_None);
+	return true;
 }
 
 //*****************************************************************************
